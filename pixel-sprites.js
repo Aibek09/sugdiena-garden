@@ -10,7 +10,8 @@ const PixelSprites = (() => {
     'read-check':[12,12],mailbox:[26,40],picnic:[60,38],flowerbed:[48,23],bunting:[80,48],flowerpot:[22,28],
     teatable:[48,34],ema:[48,48],'ema-tag':[13,16],windchime:[18,42],
     flowercart:[64,54],'stone-lantern':[26,40],bamboo:[32,62],parasol:[58,60],
-    cushion:[28,16],wateringcan:[24,22],signpost:[26,32],hydrangea:[38,30] };
+    cushion:[28,16],wateringcan:[24,22],signpost:[26,32],hydrangea:[38,30],
+    'bunny-kimono':[32,40],'bunny-gardener':[32,40],bear:[32,36],hedgehog:[32,30] };
   const rect=(g,x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);};
   function oval(g,x,y,w,h,c) {
     g.fillStyle=c;
@@ -277,10 +278,52 @@ const PixelSprites = (() => {
     oval(g,1,20,36,9,C.leafDark);oval(g,2,18,18,8,C.leaf);oval(g,20,19,16,8,C.leaf);
     [[5,10],[17,6],[24,13],[12,16]].forEach(([x,y],i)=>{shell(g,x,y,13,12,i%2?C.pink:C.shade,C.inkLight);[[3,3],[8,4],[5,8]].forEach(([dx,dy])=>{rect(g,x+dx,y+dy,3,1,C.white);rect(g,x+dx+1,y+dy-1,1,3,C.white);});});
   }
+  function dressedBunny(g,kind,blink=false) {
+    bunny(g,'down',-1,blink);
+    const kimono=kind==='bunny-kimono';
+    rect(g,10,29,14,7,C.ink);rect(g,11,29,12,6,kimono?C.pink:C.leaf);
+    rect(g,7,29,5,4,kimono?C.rose:C.leafDark);rect(g,23,29,4,4,kimono?C.rose:C.leafDark);
+    if(kimono){
+      line(g,12,29,18,33,C.white);line(g,22,29,18,33,C.white);
+      rect(g,11,33,13,2,C.deep);rect(g,16,32,4,3,C.cream);
+      rect(g,24,12,5,2,C.rose);rect(g,25,11,3,4,C.pink);rect(g,26,12,1,1,C.cream);
+    }else{
+      rect(g,13,29,2,3,C.cream);rect(g,20,29,2,3,C.cream);
+      rect(g,14,32,8,4,C.cream);rect(g,16,33,4,2,C.wood);
+      rect(g,5,13,25,2,C.woodDark);rect(g,7,11,21,2,C.cream);rect(g,10,9,15,3,C.sand);
+      rect(g,9,12,17,1,C.rose);
+    }
+  }
+  function woodland(g,kind,blink=false) {
+    const bear=kind==='bear';
+    if(bear){
+      shell(g,5,2,9,9,C.sand);shell(g,21,2,9,9,C.sand);
+      oval(g,8,4,4,4,C.pink);oval(g,23,4,4,4,C.pink);
+      shell(g,7,21,20,13,C.sand);shell(g,6,30,9,5,C.sand);shell(g,21,30,9,5,C.sand);
+      shell(g,3,7,28,21,C.sand);oval(g,10,17,16,9,C.cream);
+      rect(g,8,27,20,3,C.pink);rect(g,22,29,4,5,C.rose);
+      shell(g,3,25,6,7,C.sand);shell(g,26,25,5,7,C.sand);
+    }else{
+      for(let i=0;i<7;i++){rect(g,4+i*4,8+Math.abs(i-3)*2,3,13,C.woodDark);}
+      shell(g,2,9,29,19,C.wood);shell(g,7,13,23,14,C.cream);
+      shell(g,7,23,7,5,C.sand);shell(g,23,23,7,5,C.sand);
+      rect(g,3,20,5,3,C.rose);rect(g,4,23,3,4,C.pink);
+      rect(g,13,7,5,2,C.leafDark);rect(g,15,5,6,2,C.leaf);
+    }
+    const y=bear?15:18;
+    [11,23].forEach(x=>{rect(g,x,y,2,blink?1:3,C.ink);if(!blink)rect(g,x,y,1,1,C.white);});
+    rect(g,17,y+5,3,2,C.ink);rect(g,18,y+7,1,1,C.ink);
+    oval(g,7,y+5,4,2,C.pink);oval(g,25,y+5,4,2,C.pink);
+  }
   const painters={letter:g=>envelope(g), 'letter-open':g=>envelope(g,true),sakura,bush,stone,flower,lantern,house,bench,bridge,torii,
     'read-check':readCheck,mailbox,picnic,flowerbed,bunting,flowerpot,teatable,ema,'ema-tag':emaTag,windchime,
     flowercart,'stone-lantern':stoneLantern,bamboo,parasol,cushion,wateringcan,signpost,hydrangea,
     fox:g=>animal(g,'fox'),cat:g=>animal(g,'cat'),bird:g=>animal(g,'bird')};
+  for(const kind of ['bunny-kimono','bunny-gardener','bear','hedgehog']){
+    const paint=kind.startsWith('bunny')?dressedBunny:woodland;
+    painters[kind]=g=>paint(g,kind,false);
+    sizes[kind+'-blink']=sizes[kind];painters[kind+'-blink']=g=>paint(g,kind,true);
+  }
   function build(scene) {
     Object.entries(painters).forEach(([key,paint])=>{
       if(scene.textures.exists(key))return;
@@ -296,6 +339,17 @@ const PixelSprites = (() => {
       const key='bunny-walk-'+dir;if(!scene.anims.exists(key))scene.anims.create({key,frames:[0,1,2,3].map(f=>({key:'bunny',frame:d*4+f})),frameRate:9,repeat:-1});
     });
     if(!scene.anims.exists('bunny-idle'))scene.anims.create({key:'bunny-idle',frames:[{key:'bunny',frame:16,duration:2400},{key:'bunny',frame:17,duration:130},{key:'bunny',frame:16,duration:1900}],repeat:-1});
+    for(const kind of ['bunny-kimono','bunny-gardener','cat','fox','bird','bear','hedgehog']){
+      const texture=scene.textures.createCanvas('hero-'+kind,32*6,40),g=texture.getContext();
+      g.imageSmoothingEnabled=false;
+      for(let f=0;f<6;f++){
+        g.save();const [w,h]=sizes[kind];g.translate(f*32+(32-w)/2,38-h-(f<4&&f%2?2:0));
+        if(kind.startsWith('bunny'))dressedBunny(g,kind,f===5);
+        else if(kind==='bear'||kind==='hedgehog')woodland(g,kind,f===5);
+        else animal(g,kind,f===5);
+        g.restore();texture.add(f,0,f*32,0,32,40);
+      }texture.refresh();
+    }
     return sizes;
   }
   const cache={};

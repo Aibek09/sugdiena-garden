@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="island.css">
 <link rel="stylesheet" href="typography.css">
 <link rel="stylesheet" href="garden.css">
+<link rel="stylesheet" href="characters.css">
 </head>
 <body>
 <header class="topbar">
@@ -19,6 +20,7 @@
 </span>
 </a>
 <nav aria-label="Меню игры">
+<button id="characterButton" class="nav-button" aria-label="Выбрать персонажа">Мой герой</button>
 <button id="exploreButton" class="nav-button" title="Письма на карте" aria-label="Найти письмо">
 <span data-icon="compass">
 </span>
@@ -178,6 +180,12 @@
 <p>Все 50 писем доступны сразу, без уровней и лимитов. После чтения нажми «Прочитано ✓»: письмо получит зелёную галочку и останется в архиве. Прогресс сохраняется в этом браузере.</p>
 <p>Задачи — среднего и чуть выше среднего уровня. Можно думать сколько угодно: таймера и штрафов нет. Кнопка «Включить музыку» добавит тихую оригинальную мелодию с щипковыми струнами и флейтой. При уходе с вкладки она затихает.</p>
 <button class="primary" data-close>Пойдём ♡</button>
+</dialog>
+<dialog id="characterDialog" class="help-dialog character-dialog" aria-labelledby="characterTitle">
+<button class="dialog-close" data-close aria-label="Закрыть выбор персонажа">×</button>
+<h2 id="characterTitle">Кем сегодня погуляем?</h2>
+<p>Восемь маленьких друзей. Выбирай по настроению — твои письма останутся с тобой.</p>
+<div id="characterGrid" class="character-grid"></div>
 </dialog>
 <script src="assets/vendor/phaser-3.90.0.min.js">
 </script>

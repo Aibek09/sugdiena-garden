@@ -23,6 +23,14 @@ const Island = (() => {
     [1294,864],[578,1006]];
   ADVENTURES.forEach((q, i) => { if(positions[i]){q.x = positions[i][0]; q.y = positions[i][1];} });
   const valid = id => ADVENTURES.some(q => q.id === id);
+  const CHARACTERS=[{key:'bunny',name:'Плюш',detail:'зайчик-путешественник'},
+    {key:'bunny-kimono',name:'Хана',detail:'зайчик в кимоно'},
+    {key:'bunny-gardener',name:'Моти',detail:'зайчик-садовник'},
+    {key:'cat',name:'Тиша',detail:'сонная кошечка'},
+    {key:'bird',name:'Фини',detail:'маленькая птичка'},
+    {key:'fox',name:'Мира',detail:'добрая лисичка'},
+    {key:'bear',name:'Кума',detail:'мишка в шарфике'},
+    {key:'hedgehog',name:'Ёся',detail:'ёжик с листочком'}];
   let state = { done: [], read: [], hearts: [], progress: {}, sound: false, pos: { x: 280, y: 264 } };
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
@@ -33,6 +41,7 @@ const Island = (() => {
       state.hearts = (Array.isArray(old.hearts) ? old.hearts : []).filter(id => state.done.includes(id));
       state.progress = old.progress && typeof old.progress === 'object' ? old.progress : {};
       state.sound = !!old.sound;
+      state.character=CHARACTERS.some(c=>c.key===old.character)?old.character:'bunny';
       if (saved && Number.isFinite(saved.pos?.x) && Number.isFinite(saved.pos?.y)) state.pos = saved.pos;
     }
   } catch (_) { /* A private browser still supports an unsaved visit. */ }
@@ -240,7 +249,10 @@ const Island = (() => {
         if(ADVENTURES.some(q=>Math.hypot(q.x-x,q.y-y)<34) || footprints.some(p=>Math.abs(p.x-x)<p.width/2+10&&Math.abs(p.y-y)<p.height/2+10)) continue;
         put('flower',x,y,1);
       }
-      put('cat',348,272); put('fox',1190,398); put('bird',906,226); put('cat',1306,700); put('bird',548,906);
+      put('cat',348,272); put('fox',1190,398); put('bird',906,226);
+      [['bunny-kimono',1306,700],['bunny-gardener',548,906],['bear',668,690],['hedgehog',1050,800]].forEach(([key,x,y])=>{
+        const sprite=put(key,x,y);this.ambient.push({sprite,kind:'friend',key,x,y,phase:x*.017});
+      });
       // Small lily pads stay below all actors.
       this.add.rectangle(330,660,12,5,0xaec7b2).setDepth(-5);
       this.add.rectangle(394,702,13,5,0xaec7b2).setDepth(-5);
@@ -384,6 +396,10 @@ const Island = (() => {
       const still=reduced.matches,t=still?0:time/1000*3.6;
       for(const item of this.ambient){
         const {sprite,kind,phase,x,y}=item;
+        if(kind==='friend'){
+          sprite.setTexture(item.key+(!still&&(time/1000+phase)%4.7>4.5?'-blink':''));
+          sprite.setRotation(still?0:Math.sin(time/1000*1.8+phase)*.025);continue;
+        }
         if(kind==='glow'){sprite.setAlpha(still?.1:.09+.035*(1+Math.sin(t*1.4+phase)));continue;}
         if(kind==='windchime'||kind==='tag'||kind==='flower'){
           const amplitude=kind==='flower'?.045:kind==='tag'?.09:.075;
@@ -423,8 +439,17 @@ const Island = (() => {
         if(!this.route.length&&!length){this.destination.setVisible(false);if(this.pending){const q=this.pending;this.pending=null;this.interact(q);}if($('#walkingText'))$('#walkingText').textContent='Касайся земли или гуляй стрелками';}
       }
       const moving=!modal&&Math.hypot(player.body.velocity.x,player.body.velocity.y)>1;
-      if(moving){if(Math.abs(dx)>Math.abs(dy))this.facing=dx<0?'left':'right';else this.facing=dy<0?'up':'down';player.anims.play('walk-'+this.facing,true);}
-      else {player.anims.stop();const frames={down:16,left:4,right:8,up:12};player.setFrame(this.facing==='down'&&time%5400>5180?17:frames[this.facing]);}
+      const skin=CHARACTERS.some(c=>c.key===state.character)?state.character:'bunny';
+      if(moving){if(Math.abs(dx)>Math.abs(dy))this.facing=dx<0?'left':'right';else this.facing=dy<0?'up':'down';}
+      if(skin==='bunny'){
+        if(player.texture.key!=='bunny'){player.anims.stop();player.setTexture('bunny',16);}
+        player.setFlipX(false);
+        if(moving)player.anims.play('walk-'+this.facing,true);
+        else {player.anims.stop();const frames={down:16,left:4,right:8,up:12};player.setFrame(this.facing==='down'&&time%5400>5180?17:frames[this.facing]);}
+      }else{
+        player.anims.stop();player.setTexture('hero-'+skin,moving?Math.floor(time/110)%4:time%4700>4500?5:4);
+        player.setFlipX(this.facing==='left');
+      }
       player.setDepth(player.y);this.shadow.setPosition(player.x,player.y-2).setDepth(player.y-1);
       hero.x=player.x;hero.y=player.y;
       this.refreshNearby();this.nearby.clear();
@@ -447,6 +472,21 @@ const Island = (() => {
   $('#moodButton')?.addEventListener('click',()=>window.Adventures?.explore());
   $('#albumButton')?.addEventListener('click',()=>window.Adventures?.album());
   $('#helpButton')?.addEventListener('click',()=>{stop();$('#helpDialog')?.showModal();});
+  $('#characterButton')?.addEventListener('click',()=>{
+    stop();const grid=$('#characterGrid');grid.replaceChildren();
+    CHARACTERS.forEach(c=>{
+      const button=document.createElement('button');button.className='character-choice';button.type='button';
+      button.setAttribute('aria-pressed',String(c.key===(state.character||'bunny')));
+      const img=document.createElement('img');img.alt='';
+      img.src=c.key==='bunny'?PixelSprites.portrait('plush'):PixelSprites.icon(c.key);
+      const title=document.createElement('strong');title.textContent=c.name;
+      const description=document.createElement('small');description.textContent=c.detail;
+      button.append(img,title,description);button.onclick=()=>{
+        state.character=c.key;save();scene.facing='down';
+        $('#characterDialog').close();$('#game').focus();
+      };grid.append(button);
+    });$('#characterDialog').showModal();
+  });
   $('#soundButton')?.addEventListener('click',async()=>{
     state.sound=!state.sound;
     if(window.GardenMusic&&!await window.GardenMusic.unlock(state.sound)){state.sound=false;toast('Браузер пока не разрешил звук. Можно попробовать ещё раз.');}

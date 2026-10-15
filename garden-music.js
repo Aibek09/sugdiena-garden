@@ -1,10 +1,10 @@
 /* «Письма под сакурой» — original instrumental miniature for this garden.
-   No recordings, remote streams or third-party musical works. 68 BPM, D pentatonic.
+   No recordings, remote streams or third-party musical works. 58 BPM, D pentatonic.
    Audio is created only after a user gesture; silence is the default. */
 const GardenMusic=(()=>{
   'use strict';
-  const beat=60/68,bars=16,loopLength=bars*4*beat;
-  const harmony=[[50,57,62,66],[47,54,59,62],[43,50,55,59],[45,52,57,64]];
+  const beat=60/58,bars=16,loopLength=bars*4*beat;
+  const harmony=[[50,57,61,66],[47,54,57,62],[43,50,54,59],[45,52,55,59]];
   // [beat offset, MIDI pitch, duration in beats]. Rests leave room to read.
   const phrases=[
     [[0,74,1.5],[2,76,1],[3,78,.75]],
@@ -28,8 +28,10 @@ const GardenMusic=(()=>{
   for(let bar=0;bar<bars;bar++){
     const chord=harmony[bar%4];
     // Sparse low strings answer the melody rather than a constant music-box pulse.
-    [[0,chord[0],.22],[1.5,chord[2],.12],[3,chord[3],.1]].forEach(([offset,pitch,volume])=>score.push({at:(bar*4+offset)*beat,pitch,duration:2.4*beat,volume,voice:'koto',pan:-.32}));
-    phrases[bar].forEach(([offset,pitch,duration])=>score.push({at:(bar*4+offset)*beat,pitch,duration:duration*beat,volume:bar<4?.28:.22,voice:bar<4||bar>=12?'koto':'flute',pan:.23}));
+    chord.forEach((pitch,i)=>score.push({at:(bar*4+i*.045)*beat,pitch,duration:3.9*beat,volume:.055,voice:'pad',pan:(i-1.5)*.12}));
+    [[0,chord[0],.12],[2.6,chord[2],.06]].forEach(([offset,pitch,volume])=>score.push({at:(bar*4+offset)*beat,pitch,duration:3*beat,volume,voice:'koto',pan:-.25}));
+    phrases[bar].filter((_,i)=>i<2).forEach(([offset,pitch,duration])=>score.push({at:(bar*4+offset+.12)*beat,pitch:pitch-12,duration:(duration+.5)*beat,volume:.13,voice:'koto',pan:.2}));
+    [0,2.12].forEach(offset=>score.push({at:(bar*4+offset)*beat,pitch:33,duration:.24,volume:.075,voice:'kick',pan:0}));
   }
   score.sort((a,b)=>a.at-b.at);
   let context=null,master=null,bus=null,enabled=false,started=false,clock=null,cursor=0,cycleStart=0,volume=.55;
@@ -54,16 +56,22 @@ const GardenMusic=(()=>{
     context=new Audio();master=context.createGain();master.gain.value=0;
     const compressor=context.createDynamicsCompressor();compressor.threshold.value=-18;compressor.ratio.value=3;
     bus=context.createGain();bus.gain.value=.8;
-    const filter=context.createBiquadFilter();filter.type='lowpass';filter.frequency.value=4300;filter.Q.value=.35;
+    const filter=context.createBiquadFilter();filter.type='lowpass';filter.frequency.value=2100;filter.Q.value=.35;
     bus.connect(filter);filter.connect(master);master.connect(compressor);compressor.connect(context.destination);
     const delay=context.createDelay(2),feedback=context.createGain(),wet=context.createGain();
-    delay.delayTime.value=beat*.75;feedback.gain.value=.21;wet.gain.value=.2;
+    delay.delayTime.value=beat*.75;feedback.gain.value=.26;wet.gain.value=.24;
     filter.connect(delay);delay.connect(feedback);feedback.connect(delay);delay.connect(wet);wet.connect(master);
   }
   function play(event,when){
     const gain=context.createGain(),pan=context.createStereoPanner();pan.pan.value=event.pan;
     gain.gain.value=event.volume;gain.connect(pan);pan.connect(bus);
-    if(event.voice==='koto'){
+    if(event.voice==='kick'){
+      const oscillator=context.createOscillator();oscillator.type='sine';
+      oscillator.frequency.setValueAtTime(90,when);oscillator.frequency.exponentialRampToValueAtTime(42,when+.16);
+      gain.gain.setValueAtTime(0,when);gain.gain.linearRampToValueAtTime(event.volume,when+.012);gain.gain.exponentialRampToValueAtTime(.0001,when+event.duration);
+      oscillator.connect(gain);oscillator.start(when);oscillator.stop(when+event.duration);
+      oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();pan.disconnect();};
+    }else if(event.voice==='koto'){
       const key=event.pitch+':'+event.duration;
       if(!cache.has(key)){const data=pluck(event.pitch,event.duration,context.sampleRate),buffer=context.createBuffer(1,data.length,context.sampleRate);buffer.copyToChannel(data,0);cache.set(key,buffer);}
       const source=context.createBufferSource();source.buffer=cache.get(key);source.connect(gain);source.start(when);source.onended=()=>{source.disconnect();gain.disconnect();pan.disconnect();};
@@ -73,7 +81,7 @@ const GardenMusic=(()=>{
       const vibrato=context.createOscillator(),vibratoGain=context.createGain();vibrato.frequency.value=4.1;vibratoGain.gain.value=frequency(event.pitch)*.002;
       vibrato.connect(vibratoGain);vibratoGain.connect(oscillator.frequency);
       air.type='sine';air.frequency.value=frequency(event.pitch)*2;airGain.gain.value=.055;air.connect(airGain);airGain.connect(gain);
-      gain.gain.setValueAtTime(0,when);gain.gain.linearRampToValueAtTime(event.volume,when+.16);
+      gain.gain.setValueAtTime(0,when);gain.gain.linearRampToValueAtTime(event.volume,when+(event.voice==='pad'?.65:.16));
       gain.gain.setValueAtTime(event.volume*.8,when+Math.max(.17,event.duration-.24));gain.gain.linearRampToValueAtTime(0,when+event.duration);
       oscillator.connect(gain);[oscillator,air,vibrato].forEach(o=>{o.start(when);o.stop(when+event.duration+.03)});
       oscillator.onended=()=>{[oscillator,air,vibrato,vibratoGain,airGain,gain,pan].forEach(n=>n.disconnect());};
