@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff9f4">
+<meta name="description" content="Розовый сад, зайчик Плюш и 50 писем с тёплыми словами. Гуляй и открывай их в своём ритме.">
+<title>Там, где тепло — маленькая прогулка</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="island.css">
+<link rel="stylesheet" href="typography.css">
+<link rel="stylesheet" href="garden.css">
+</head>
+<body>
+<header class="topbar">
+<a href="#" class="brand" id="homeButton" aria-label="Вернуться к зайчику">
+<img data-pixel="plush" alt="">
+<span>Там, где тепло<small>маленькая прогулка для Сугдиены</small>
+</span>
+</a>
+<nav aria-label="Меню игры">
+<button id="exploreButton" class="nav-button" title="Письма на карте" aria-label="Найти письмо">
+<span data-icon="compass">
+</span>
+<span class="nav-label">Найти письмо</span>
+</button>
+<button id="albumButton" class="nav-button" title="Архив писем">
+<span data-icon="envelope">
+</span>
+<span class="nav-label album-label">Архив писем</span>
+<b id="collectedCount">0 / 50</b>
+</button>
+<button id="helpButton" class="icon-button" aria-label="Как играть">?</button>
+</nav>
+</header>
+<main class="world-shell" id="worldShell">
+<div id="game" role="application" aria-label="Розовый сад. Ходи стрелками или WASD. Касайся земли, чтобы идти. Подойди к письму и нажми E.">
+</div>
+<div class="garden-label">
+<span class="location-dot">
+</span>
+<span id="locationName">Сад тихих радостей</span>
+<small>все тропинки открыты</small>
+</div>
+<div class="walking-note">
+<span id="walkingText">Коснись дорожки — Плюш пойдёт туда</span>
+</div>
+<div class="nearby" id="nearbyPanel">
+<span id="nearbyTitle">
+</span>
+<button id="interactButton" class="primary" hidden>
+<span class="key">E</span> Открыть письмо</button>
+</div>
+<div class="mini-map" aria-label="Карта сада: розовые точки — письма">
+<canvas id="miniCanvas" width="192" height="144">
+</canvas>
+<span>наш маленький сад</span>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite">
+</div>
+<div class="load-screen" id="loading">
+<span class="load-flower">✿</span>
+<span>Плюш открывает калитку…</span>
+</div>
+<div id="welcomeNote" hidden>
+</div>
+<div id="questPreview" hidden>
+</div>
+</main>
+<footer class="bottom-bar">
+<span>Здесь некуда спешить ♡</span>
+<span class="desktop-hint">WASD / стрелки — идти <em>·</em> E — открыть письмо</span>
+<button id="soundButton" aria-label="Включить музыку" aria-pressed="false" title="Письма под сакурой — тихая оригинальная мелодия">
+<span data-icon="sound">
+</span>
+<span id="soundLabel">Включить музыку</span>
+</button>
+</footer>
+<dialog class="explore-dialog" id="exploreDialog" aria-labelledby="exploreTitle">
+<button class="dialog-close" data-close aria-label="Закрыть список писем">×</button>
+<span class="eyebrow">ЛЮБОЕ ПИСЬМО МОЖЕТ БЫТЬ ПЕРВЫМ</span>
+<h2 id="exploreTitle">Куда хочется прогуляться?</h2>
+<p class="muted">50 писем — 50 задач по математике и физике. Выбери письмо: Плюш найдёт дорожку. Реши задачу, чтобы прочитать послание.</p>
+<div class="mood-filters" id="moodFilters">
+</div>
+<div class="adventure-grid" id="adventureGrid">
+</div>
+</dialog>
+<dialog class="quest-dialog" id="questDialog" aria-labelledby="questTitle" aria-describedby="questInstruction">
+<button class="dialog-close" data-close aria-label="Вернуться в сад">×</button>
+<div class="quest-header">
+<img id="questAvatar" data-pixel="plush" alt="">
+<div>
+<span class="eyebrow" id="questPlace">
+</span>
+<h2 id="questTitle">
+</h2>
+<p id="questInstruction">
+</p>
+</div>
+</div>
+<div class="mini-game" id="miniGame">
+</div>
+<div class="quest-feedback" id="questFeedback" role="status" aria-live="polite">
+</div>
+<div class="quest-footer">
+<span id="questProgress" aria-live="polite">
+</span>
+<span>Можно вернуться позже.</span>
+</div>
+</dialog>
+<dialog class="conversation-dialog" id="conversationDialog" aria-labelledby="conversationTitle" aria-describedby="accessibleSpeech">
+<div class="conversation-scene">
+<span class="pixel-petal petal-a">
+</span>
+<span class="pixel-petal petal-b">
+</span>
+<div class="conversation-art">
+<canvas width="330" height="430" id="portraitCanvas" aria-label="Друг рассказывает послание">
+</canvas>
+</div>
+<div class="conversation-context">
+<span class="eyebrow" id="conversationPlace">
+</span>
+<h2 id="conversationTitle">
+</h2>
+<span class="reward-seal">
+<span data-icon="envelope">
+</span> ПИСЬМО ДЛЯ ТЕБЯ</span>
+</div>
+<button class="dialog-close" data-close aria-label="Вернуться в сад">×</button>
+</div>
+<div class="speech-panel">
+<div class="speaker-line">
+<span id="speakerName">
+</span>
+<span id="messageType">
+</span>
+</div>
+<div class="speech-text" id="speechText">
+<span class="sr-only" id="accessibleSpeech">
+</span>
+<span id="typedText" aria-hidden="true">
+</span>
+<span class="typing-cursor" aria-hidden="true">
+</span>
+</div>
+<p id="speechSource" class="speech-source">
+</p>
+<div class="speech-actions">
+<button class="text-button" id="favoriteButton" aria-pressed="false">
+<span>♡</span> Оставить в сердце</button>
+<button class="primary" id="speechNext">Показать целиком <span>↓</span>
+</button>
+</div>
+</div>
+</dialog>
+<dialog class="album-dialog" id="albumDialog" aria-labelledby="albumTitle">
+<button class="dialog-close" data-close aria-label="Закрыть послания">×</button>
+<span class="eyebrow">МОЖНО ПЕРЕЧИТАТЬ, КОГДА ЗАХОЧЕТСЯ</span>
+<h2 id="albumTitle">Архив тёплых писем</h2>
+<p class="muted" id="albumDescription">
+</p>
+<div class="album-tabs">
+<button data-album="read" class="active">Прочитанные ✓</button>
+<button data-album="all">Все открытые</button>
+<button data-album="hearts">В сердце ♡</button>
+</div>
+<div class="album-grid" id="albumGrid">
+</div>
+</dialog>
+<dialog class="help-dialog" id="helpDialog" aria-labelledby="helpTitle">
+<button class="dialog-close" data-close aria-label="Закрыть подсказку">×</button>
+<img data-pixel="plush" alt="Зайчик Плюш">
+<h2 id="helpTitle">Давай просто погуляем.</h2>
+<p>Коснись земли — Плюш пойдёт туда. На компьютере можно ходить стрелками или WASD.</p>
+<p>На полянках лежат письма. Подойди поближе и коснись письма или нажми E. У каждого письма своя задача и четыре ответа: A, B, C, D. Верный ответ откроет послание. Если ошибёшься, можно попробовать ещё раз.</p>
+<p>Все 50 писем доступны сразу, без уровней и лимитов. После чтения нажми «Прочитано ✓»: письмо получит зелёную галочку и останется в архиве. Прогресс сохраняется в этом браузере.</p>
+<p>Задачи — среднего и чуть выше среднего уровня. Можно думать сколько угодно: таймера и штрафов нет. Кнопка «Включить музыку» добавит тихую оригинальную мелодию с щипковыми струнами и флейтой. При уходе с вкладки она затихает.</p>
+<button class="primary" data-close>Пойдём ♡</button>
+</dialog>
+<script src="assets/vendor/phaser-3.90.0.min.js">
+</script>
+<script src="data.js">
+</script>
+<script src="letters.js"></script>
+<script src="questions.js"></script>
+<script src="pixel-sprites.js">
+</script>
+<script src="garden-music.js"></script>
+<script src="garden.js">
+</script>
+<script src="adventures.js">
+</script>
+</body>
+</html>
