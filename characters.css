@@ -1,4 +1,9 @@
 .character-dialog{width:min(740px,calc(100% - 24px));max-width:740px;text-align:center}
+.welcome-dialog{width:min(760px,calc(100% - 30px));max-width:760px;max-height:90svh;overflow:auto;text-align:left;padding:30px 42px}
+.welcome-dialog>img{display:block;width:58px;height:78px;margin:0 auto 4px}
+.welcome-dialog h2{text-align:center;margin:7px 0 18px}
+.welcome-dialog p{font-size:13px;line-height:1.62;margin:10px 0;color:#7f6c77}
+.welcome-dialog .primary{display:block;margin:20px auto 0}
 .character-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
 .character-choice{position:relative;display:flex;align-items:center;flex-direction:column;gap:7px;min-width:0;padding:18px 8px 14px;border:2px solid #ead7e1;border-radius:12px;background:#fff9f4;color:#76536f;font:inherit;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
 .character-choice img{width:64px;height:80px;object-fit:contain;image-rendering:pixelated}
@@ -8,5 +13,5 @@
 .character-choice[aria-pressed=true]{border-color:#8faa84;background:#f3f5ec}
 .character-choice[aria-pressed=true]:after{content:'✓';position:absolute;right:10px;top:7px;color:#5c8056}
 .character-choice:focus-visible{outline:3px solid #ad759b;outline-offset:3px}
-@media(max-width:560px){.character-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.character-choice{padding:10px 6px}.character-choice img{height:64px;width:52px}#characterButton{font-size:10px;padding:0 6px}.character-dialog{max-height:88svh;overflow:auto}}
+@media(max-width:560px){.character-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.character-choice{padding:10px 6px}.character-choice img{height:64px;width:52px}#characterButton{font-size:10px;padding:0 6px}.character-dialog{max-height:88svh;overflow:auto}.welcome-dialog{width:calc(100% - 20px);padding:24px 20px;max-height:90svh}.welcome-dialog p{font-size:12px;line-height:1.58}.welcome-dialog>img{width:48px;height:66px}}
 @media(prefers-reduced-motion:reduce){.character-choice{transition:none}.character-choice:hover{transform:none}}

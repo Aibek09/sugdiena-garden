@@ -278,13 +278,13 @@ const PixelSprites = (() => {
     oval(g,1,20,36,9,C.leafDark);oval(g,2,18,18,8,C.leaf);oval(g,20,19,16,8,C.leaf);
     [[5,10],[17,6],[24,13],[12,16]].forEach(([x,y],i)=>{shell(g,x,y,13,12,i%2?C.pink:C.shade,C.inkLight);[[3,3],[8,4],[5,8]].forEach(([dx,dy])=>{rect(g,x+dx,y+dy,3,1,C.white);rect(g,x+dx+1,y+dy-1,1,3,C.white);});});
   }
-  function dressedBunny(g,kind,blink=false) {
-    bunny(g,'down',-1,blink);
+  function dressedBunny(g,kind,blink=false,dir='down',frame=-1) {
+    bunny(g,dir,frame,blink);
     const kimono=kind==='bunny-kimono';
     rect(g,10,29,14,7,C.ink);rect(g,11,29,12,6,kimono?C.pink:C.leaf);
     rect(g,7,29,5,4,kimono?C.rose:C.leafDark);rect(g,23,29,4,4,kimono?C.rose:C.leafDark);
     if(kimono){
-      line(g,12,29,18,33,C.white);line(g,22,29,18,33,C.white);
+      if(dir!=='up'){line(g,12,29,18,33,C.white);line(g,22,29,18,33,C.white);}
       rect(g,11,33,13,2,C.deep);rect(g,16,32,4,3,C.cream);
       rect(g,24,12,5,2,C.rose);rect(g,25,11,3,4,C.pink);rect(g,26,12,1,1,C.cream);
     }else{
@@ -315,6 +315,25 @@ const PixelSprites = (() => {
     rect(g,17,y+5,3,2,C.ink);rect(g,18,y+7,1,1,C.ink);
     oval(g,7,y+5,4,2,C.pink);oval(g,25,y+5,4,2,C.pink);
   }
+  function directionalFriend(g,kind,dir='down',frame=-1,blink=false) {
+    const [w,h]=sizes[kind],bob=!kind.startsWith('bunny')&&frame>=0&&(frame===1||frame===3)?-1:0;
+    g.save();g.translate(0,bob);
+    if(kind.startsWith('bunny'))dressedBunny(g,kind,blink,dir,frame);
+    else {
+      if(kind==='bear'||kind==='hedgehog')woodland(g,kind,blink);else animal(g,kind,blink);
+      const base=kind==='fox'?C.fox:kind==='cat'||kind==='hedgehog'?C.cream:kind==='bear'?C.sand:C.pink;
+      if(dir==='up'){
+        oval(g,Math.max(1,w*.08),Math.max(5,h*.25),w*.84,h*.48,base);
+        rect(g,w*.35,h*.38,2,h*.2,C.inkLight);rect(g,w*.62,h*.38,2,h*.2,C.inkLight);
+      }else if(dir==='left'||dir==='right'){
+        oval(g,Math.max(1,w*.06),Math.max(6,h*.27),w*.88,h*.46,base);
+        const right=dir==='right',eye=right?w*.64:w*.28,nose=right?w*.88:w*.08;
+        rect(g,eye,h*.4,2,blink?1:3,C.ink);rect(g,nose,h*.56,2,2,C.deep);
+        oval(g,right?w*.7:w*.17,h*.58,4,2,C.pink);
+      }
+    }
+    g.restore();
+  }
   const painters={letter:g=>envelope(g), 'letter-open':g=>envelope(g,true),sakura,bush,stone,flower,lantern,house,bench,bridge,torii,
     'read-check':readCheck,mailbox,picnic,flowerbed,bunting,flowerpot,teatable,ema,'ema-tag':emaTag,windchime,
     flowercart,'stone-lantern':stoneLantern,bamboo,parasol,cushion,wateringcan,signpost,hydrangea,
@@ -340,14 +359,15 @@ const PixelSprites = (() => {
     });
     if(!scene.anims.exists('bunny-idle'))scene.anims.create({key:'bunny-idle',frames:[{key:'bunny',frame:16,duration:2400},{key:'bunny',frame:17,duration:130},{key:'bunny',frame:16,duration:1900}],repeat:-1});
     for(const kind of ['bunny-kimono','bunny-gardener','cat','fox','bird','bear','hedgehog']){
-      const texture=scene.textures.createCanvas('hero-'+kind,32*6,40),g=texture.getContext();
+      const texture=scene.textures.createCanvas('hero-'+kind,32*18,40),g=texture.getContext();
       g.imageSmoothingEnabled=false;
-      for(let f=0;f<6;f++){
-        g.save();const [w,h]=sizes[kind];g.translate(f*32+(32-w)/2,38-h-(f<4&&f%2?2:0));
-        if(kind.startsWith('bunny'))dressedBunny(g,kind,f===5);
-        else if(kind==='bear'||kind==='hedgehog')woodland(g,kind,f===5);
-        else animal(g,kind,f===5);
-        g.restore();texture.add(f,0,f*32,0,32,40);
+      ['down','left','right','up'].forEach((dir,d)=>{for(let f=0;f<4;f++){
+        g.save();const [w,h]=sizes[kind];g.translate((d*4+f)*32+(32-w)/2,40-h);
+        directionalFriend(g,kind,dir,f,false);g.restore();texture.add(d*4+f,0,(d*4+f)*32,0,32,40);
+      }});
+      for(let f=16;f<18;f++){
+        g.save();const [w,h]=sizes[kind];g.translate(f*32+(32-w)/2,40-h);
+        directionalFriend(g,kind,'down',-1,f===17);g.restore();texture.add(f,0,f*32,0,32,40);
       }texture.refresh();
     }
     return sizes;

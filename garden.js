@@ -370,6 +370,8 @@ const Island = (() => {
     interact(q=this.closest?.q) {
       if(!q||document.querySelector('dialog[open]')||Phaser.Math.Distance.Between(this.player.x,this.player.y,q.x,q.y)>57)return;
       stop();this.keysHeld.clear();this.destination.setVisible(false);sound(1);
+      const dx=q.x-this.player.x,dy=q.y-this.player.y;
+      this.facing=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
       if(state.done.includes(q.id))window.Adventures?.speak(q);else window.Adventures?.open(q);
     }
     refreshNearby() {
@@ -448,7 +450,9 @@ const Island = (() => {
         else {player.anims.stop();const frames={down:16,left:4,right:8,up:12};player.setFrame(this.facing==='down'&&time%5400>5180?17:frames[this.facing]);}
       }else{
         player.anims.stop();player.setTexture('hero-'+skin,moving?Math.floor(time/110)%4:time%4700>4500?5:4);
-        player.setFlipX(this.facing==='left');
+        const starts={down:0,left:4,right:8,up:12};
+        player.setFrame(moving?starts[this.facing]+Math.floor(time/110)%4:this.facing==='down'?(time%4700>4500?17:16):starts[this.facing]);
+        player.setFlipX(false);
       }
       player.setDepth(player.y);this.shadow.setPosition(player.x,player.y-2).setDepth(player.y-1);
       hero.x=player.x;hero.y=player.y;
