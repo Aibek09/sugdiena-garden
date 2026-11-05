@@ -3953,7 +3953,7 @@
   }
 
   /* ===== Сцены ===== */
-  const INTRO = 4400, SHOW_INVITE = 3500;
+  const INTRO = 4400, ENVELOPE_PAUSE = 900;
   let butterflyExit = -1;
   let scene = still ? "idle" : "butterflies", sceneStart = 0, lastFrame = 0;
 
@@ -4077,8 +4077,8 @@
       }
       envelopeHalo(clamp((T / INTRO - .7) / .3));
       drawEnvelope(now, bob, { gather: clamp(T / INTRO), tint: butterflyExit >= 0 ? 1 - ease(clamp((T / INTRO - .25) / .6)) : 0 });
-      if (T >= SHOW_INVITE) showInvite();
-      if (T >= INTRO) setScene("idle", now);
+      // После сборки даём увидеть письмо и автоматически продолжаем историю.
+      if (T >= INTRO + ENVELOPE_PAUSE) startStory();
     } else if (scene === "idle") {
       envelopeHalo(1);
       drawEnvelope(now, bob, { beat: heartbeat(now) });
@@ -4234,10 +4234,10 @@
     finalName.classList.add("faded");
     $("seal").classList.add("faded");
     pointerNear = false;
-    if (still) showInvite();
     butterflyExit = -1;
     flockSpots = [];
     setScene(still ? "idle" : "butterflies", performance.now());
+    if (still) startStory();
   }
 
   // Кнопка в углу сразу переводит к следующему шагу истории.
@@ -4381,9 +4381,10 @@
     startActive = false;
     $("startScreen").remove();
     $("corner").classList.remove("gone");
-    if (still) showInvite();
+    if (still) startStory();
     requestAnimationFrame(now => {
-      lastFrame = sceneStart = now;
+      lastFrame = now;
+      if (!still) sceneStart = now;
       frame(now);
     });
   });
