@@ -120,6 +120,32 @@
   #sound[aria-pressed="true"] svg { color: var(--pink); }
   #back { background: var(--pink); border-color: var(--pink); border-radius: 0; color: #1c0410; opacity: 1; }
   #back:hover { background: var(--blush); border-color: var(--blush); }
+  #startScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: radial-gradient(circle, #270918 0, var(--night) 68%);
+    text-align: center;
+  }
+  #startScreen h1 { margin: 0; color: var(--blush); font: 400 clamp(64px, 15vw, 110px)/1 var(--font-script); }
+  #startButton {
+    appearance: none;
+    cursor: pointer;
+    padding: 14px 22px;
+    border: 2px solid var(--pink);
+    border-radius: 0;
+    background: var(--pink);
+    color: #1c0410;
+    font: 400 10px/1 var(--font-pixel);
+    text-transform: uppercase;
+  }
+  #startButton:hover { background: var(--blush); border-color: var(--blush); }
+  #startButton:focus-visible { outline: 2px solid var(--cream); outline-offset: 5px; }
 
   /* Подпись под розой */
   #dedication {
@@ -675,6 +701,11 @@
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
+
+<section id="startScreen" aria-label="Начать просмотр">
+  <h1>For you</h1>
+  <button id="startButton" type="button">Начать</button>
+</section>
 
 <nav id="corner">
   <button id="back" class="ghost gone" type="button"></button>
@@ -4222,7 +4253,7 @@
 
   /* ===== Звук: на сайте играет только одна мелодия ===== */
   const MUSIC_LEVEL = .85;
-  let soundOn = false, music = null, musicAsked = false, playAttempt = 0;
+  let soundOn = false, music = null, playAttempt = 0;
   if (CONFIG.music) {
     music = new Audio(CONFIG.music);
     music.preload = "auto";
@@ -4259,9 +4290,6 @@
       soundBtn.setAttribute("aria-pressed", "false");
     });
   }
-  // Пытаемся включить музыку сразу; при блокировке браузера повторим после действия пользователя.
-  toggleSound();
-
   /* ===== События ===== */
   function overEnvelope(event) {
     const x = event.clientX * dpr, y = event.clientY * dpr;
@@ -4307,23 +4335,10 @@
   });
   sky.addEventListener("pointercancel", () => { pressed = false; });
   addEventListener("resize", layout);
-  // Если автозапуск заблокирован, первое действие пользователя запускает музыку.
   addEventListener("pointerdown", event => {
-    if (!musicAsked && !soundBtn.contains(event.target)) {
-      if (!soundOn) toggleSound();
-      else if (music?.paused) music.play().catch(() => {});
-    }
-    musicAsked = true;
     // Тап по небу рассыпает сердечки
     if (event.target === sky || event.target.closest(".btn") || landing.contains(event.target) && !event.target.closest("button, video")) burstHearts(event.clientX * dpr, event.clientY * dpr);
   });
-  addEventListener("keydown", () => {
-    if (!musicAsked) {
-      if (!soundOn) toggleSound();
-      else if (music?.paused) music.play().catch(() => {});
-    }
-    musicAsked = true;
-  }, { once: true });
   // Палец могут отпустить где угодно, в том числе над кнопкой
   addEventListener("pointerup", event => { if (event.pointerType !== "mouse") pointerNear = false; });
   addEventListener("pointercancel", () => { pointerNear = false; });
@@ -4342,10 +4357,14 @@
 
   buildEnvelope();
   buildParticles();
-  if (still) showInvite();
-  requestAnimationFrame(now => {
-    lastFrame = sceneStart = now;
-    frame(now);
+  $("startButton").addEventListener("click", () => {
+    toggleSound();
+    $("startScreen").remove();
+    if (still) showInvite();
+    requestAnimationFrame(now => {
+      lastFrame = sceneStart = now;
+      frame(now);
+    });
   });
   layout();
   // Имя собирается из шрифтов, поэтому после их загрузки цели пересчитываются.
