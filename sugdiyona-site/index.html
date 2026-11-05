@@ -87,7 +87,7 @@
   }
   .btn:focus-visible, .ghost:focus-visible { outline: 2px solid var(--cream); outline-offset: 5px; }
 
-  /* Правый верхний угол: следующий шаг и звук */
+  /* Правый верхний угол: назад и звук */
   #corner {
     position: fixed;
     z-index: 3;
@@ -116,8 +116,10 @@
   .ghost:hover { opacity: 1; }
   #sound { border-color: rgba(242, 235, 224, .4); }
   #sound svg { width: 14px; height: 14px; display: block; }
-  #sound[aria-pressed="true"], #back { color: var(--blush); border-color: var(--pink); opacity: 1; }
+  #sound[aria-pressed="true"] { color: var(--blush); border-color: var(--pink); opacity: 1; }
   #sound[aria-pressed="true"] svg { color: var(--pink); }
+  #back { background: var(--pink); border-color: var(--pink); border-radius: 0; color: #1c0410; opacity: 1; }
+  #back:hover { background: var(--blush); border-color: var(--blush); }
 
   /* Подпись под розой */
   #dedication {
@@ -4220,7 +4222,7 @@
 
   /* ===== Звук: на сайте играет только одна мелодия ===== */
   const MUSIC_LEVEL = .85;
-  let soundOn = false, music = null, musicAsked = false;
+  let soundOn = false, music = null, musicAsked = false, playAttempt = 0;
   if (CONFIG.music) {
     music = new Audio(CONFIG.music);
     music.preload = "auto";
@@ -4245,16 +4247,20 @@
   function toggleSound() {
     if (!music) return;
     soundOn = !soundOn;
+    const attempt = ++playAttempt;
     soundBtn.setAttribute("aria-pressed", String(soundOn));
     if (!soundOn) {
       music.pause();
       return;
     }
     music.play().catch(() => {
+      if (attempt !== playAttempt) return;
       soundOn = false;
       soundBtn.setAttribute("aria-pressed", "false");
     });
   }
+  // Пытаемся включить музыку сразу; при блокировке браузера повторим после действия пользователя.
+  toggleSound();
 
   /* ===== События ===== */
   function overEnvelope(event) {
@@ -4301,13 +4307,23 @@
   });
   sky.addEventListener("pointercancel", () => { pressed = false; });
   addEventListener("resize", layout);
-  // Браузер разрешает звук только после первого касания: с него и начинается музыка
+  // Если автозапуск заблокирован, первое действие пользователя запускает музыку.
   addEventListener("pointerdown", event => {
-    if (!soundOn && !musicAsked && !soundBtn.contains(event.target)) toggleSound();
+    if (!musicAsked && !soundBtn.contains(event.target)) {
+      if (!soundOn) toggleSound();
+      else if (music?.paused) music.play().catch(() => {});
+    }
     musicAsked = true;
     // Тап по небу рассыпает сердечки
     if (event.target === sky || event.target.closest(".btn") || landing.contains(event.target) && !event.target.closest("button, video")) burstHearts(event.clientX * dpr, event.clientY * dpr);
   });
+  addEventListener("keydown", () => {
+    if (!musicAsked) {
+      if (!soundOn) toggleSound();
+      else if (music?.paused) music.play().catch(() => {});
+    }
+    musicAsked = true;
+  }, { once: true });
   // Палец могут отпустить где угодно, в том числе над кнопкой
   addEventListener("pointerup", event => { if (event.pointerType !== "mouse") pointerNear = false; });
   addEventListener("pointercancel", () => { pointerNear = false; });
