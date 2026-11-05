@@ -133,6 +133,7 @@
     text-align: center;
   }
   #startScreen h1 { position: relative; z-index: 1; margin: 0; color: var(--blush); font: 400 clamp(64px, 15vw, 110px)/1 var(--font-script); text-shadow: 0 0 28px #9c195e; }
+  #startGreeting { position: relative; z-index: 1; margin: 0; width: min(540px, calc(100% - 40px)); color: var(--blush); font: 400 clamp(16px, 3.8vw, 22px)/1.6 var(--font-text); text-wrap: balance; text-shadow: 0 2px 8px #020204, 0 0 18px #020204; }
   #startButton {
     position: relative;
     z-index: 1;
@@ -706,6 +707,7 @@
 
 <section id="startScreen" aria-label="Начать просмотр">
   <h1>For you</h1>
+  <p id="startGreeting">C шестым и седьмым днем рождения тебя Sugdiyona</p>
   <button id="startButton" type="button">Начать</button>
 </section>
 
