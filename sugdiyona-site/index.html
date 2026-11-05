@@ -129,11 +129,14 @@
     align-items: center;
     justify-content: center;
     gap: 28px;
-    background: radial-gradient(circle, #270918 0, var(--night) 68%);
+    background: var(--night);
     text-align: center;
   }
-  #startScreen h1 { margin: 0; color: var(--blush); font: 400 clamp(64px, 15vw, 110px)/1 var(--font-script); }
+  #startSky { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #startScreen h1 { position: relative; z-index: 1; margin: 0; color: var(--blush); font: 400 clamp(64px, 15vw, 110px)/1 var(--font-script); text-shadow: 0 0 28px #9c195e; }
   #startButton {
+    position: relative;
+    z-index: 1;
     appearance: none;
     cursor: pointer;
     padding: 14px 22px;
@@ -703,6 +706,7 @@
 <canvas id="sky" aria-hidden="true"></canvas>
 
 <section id="startScreen" aria-label="Начать просмотр">
+  <canvas id="startSky" aria-hidden="true"></canvas>
   <h1>For you</h1>
   <button id="startButton" type="button">Начать</button>
 </section>
@@ -4357,8 +4361,64 @@
 
   buildEnvelope();
   buildParticles();
+  const startSky = $("startSky"), startCtx = startSky.getContext("2d");
+  let startActive = true, startStars = [], startMeteors = [], startWidth = 0, startHeight = 0;
+  const reduceStartMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function drawStartSky(now) {
+    if (!startActive) return;
+    const scale = Math.min(devicePixelRatio || 1, 2);
+    const width = Math.round(innerWidth * scale), height = Math.round(innerHeight * scale);
+    if (width !== startWidth || height !== startHeight) {
+      startWidth = startSky.width = width;
+      startHeight = startSky.height = height;
+      startStars = Array.from({ length: Math.min(650, Math.floor(width * height / (1800 * scale * scale))) }, () => ({
+        x: Math.random() * width, y: Math.random() * height,
+        size: Math.random() < .85 ? scale : 1.6 * scale,
+        phase: Math.random() * 6.28, speed: .0006 + Math.random() * .0018
+      }));
+      startMeteors = Array.from({ length: 4 }, (_, i) => ({
+        born: now - i * 1450, x: width * (.18 + Math.random() * .72), y: height * (.05 + Math.random() * .35)
+      }));
+    }
+    startCtx.fillStyle = "#020204";
+    startCtx.fillRect(0, 0, width, height);
+    for (const star of startStars) {
+      startCtx.globalAlpha = .45 + .45 * (1 + Math.sin(now * star.speed + star.phase)) / 2;
+      startCtx.fillStyle = "#fff";
+      startCtx.fillRect(star.x, star.y, star.size, star.size);
+    }
+    startCtx.globalAlpha = 1;
+    if (!reduceStartMotion) for (const meteor of startMeteors) {
+      let age = now - meteor.born;
+      if (age > 1750) {
+        meteor.born = now + 900 + Math.random() * 2700;
+        meteor.x = width * (.2 + Math.random() * .75);
+        meteor.y = height * (.03 + Math.random() * .35);
+        age = 0;
+      }
+      if (age < 0) continue;
+      const progress = age / 1750;
+      const x = meteor.x - progress * width * .38;
+      const y = meteor.y + progress * height * .45;
+      const tail = Math.min(95 * scale, width * .2) * Math.sin(Math.PI * progress);
+      startCtx.beginPath();
+      startCtx.moveTo(x + tail * .65, y - tail);
+      startCtx.lineTo(x, y);
+      startCtx.strokeStyle = `rgba(255, 63, 142, ${Math.sin(Math.PI * progress) * .9})`;
+      startCtx.lineWidth = 2.5 * scale;
+      startCtx.shadowColor = "#ff3f8e";
+      startCtx.shadowBlur = 14 * scale;
+      startCtx.stroke();
+      startCtx.fillStyle = "#ffe6f0";
+      startCtx.fillRect(x - 2 * scale, y - 2 * scale, 4 * scale, 4 * scale);
+      startCtx.shadowBlur = 0;
+    }
+    requestAnimationFrame(drawStartSky);
+  }
+  requestAnimationFrame(drawStartSky);
   $("startButton").addEventListener("click", () => {
     toggleSound();
+    startActive = false;
     $("startScreen").remove();
     if (still) showInvite();
     requestAnimationFrame(now => {
